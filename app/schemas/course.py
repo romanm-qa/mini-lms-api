@@ -1,18 +1,24 @@
 from pydantic import BaseModel
 
 
-class CourseBase(BaseModel):
+class CourseCreate(BaseModel):
     title: str
-    description: str
+    description: str | None = None
     is_active: bool = True
 
 
-class CourseCreate(CourseBase):
-    pass
+class CourseUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    is_active: bool | None = None
 
 
-class CourseResponse(CourseBase):
+class CourseResponse(BaseModel):
     id: int
+    title: str
+    description: str | None = None
+    is_active: bool
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True
+    }

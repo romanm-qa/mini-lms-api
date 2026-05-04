@@ -1,55 +1,82 @@
-from fastapi import APIRouter, HTTPException
-from app.schemas.course import CourseCreate, CourseResponse
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session
 
-router = APIRouter()
+from app.database import SessionLocal
+from app.models.course import Course
+from app.schemas.course import CourseCreate, CourseUpdate, CourseResponse
 
-courses = []
 
-# GET all courses
-@router.get("/courses", response_model=list[CourseResponse])
-def get_courses():
-    return courses
+router = APIRouter(
+    prefix="/courses",
+    tags=["Courses"]
+)
 
-# GET course by ID
-@router.get("/courses/{course_id}", response_model=CourseResponse)
-def get_course(course_id: int):
-    for course in courses:
-        if course["id"] == course_id:
-            return course
 
-    raise HTTPException(status_code=404, detail="Course not found")
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-# PUT update course by ID
-@router.put("/courses/{course_id}", response_model=CourseResponse)
-def update_course(course_id: int, updated_course: CourseCreate):
-    for course in courses:
-        if course["id"] == course_id:
-            course["title"] = updated_course.title
-            course["description"] = updated_course.description
-            course["is_active"] = updated_course.is_active
-            return course
 
-    raise HTTPException(status_code=404, detail="Course not found")
+@router.post("/", response_model=CourseResponse)
+def create_course(course: CourseCreate, db: Session = Depends(get_db)):
+    new_course = Course(**course.model_dump())
 
-# DELETE course by ID
-@router.delete("/courses/{course_id}")
-def delete_course(course_id: int):
-    for course in courses:
-        if course["id"] == course_id:
-            courses.remove(course)
-            return {"message": "Course deleted successfully"}
-
-    raise HTTPException(status_code=404, detail="Course not found")
-
-# POST create new course
-@router.post("/courses", response_model=CourseResponse)
-def create_course(course: CourseCreate):
-    new_course = course.model_dump()
-
-# generate fake ID    
-    new_course["id"] = len(courses) + 1
-
-# save course to fake database (temporary in-memory storage)
-    courses.append(new_course)
+    db.add(new_course)
+    db.commit()
+    db.refresh(new_course)
 
     return new_course
+
+
+@router.get("/", response_model=list[CourseResponse])
+def get_courses(db: Session = Depends(get_db)):
+    courses = db.query(Course).all()
+    return courses
+
+
+@router.get("/{course_id}", response_model=CourseResponse)
+def get_course(course_id: int, db: Session = Depends(get_db)):
+    course = db.query(Course).filter(Course.id == course_id).first()
+
+    if course is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    return course
+
+
+@router.put("/{course_id}", response_model=CourseResponse)
+def update_course(
+    course_id: int,
+    updated_course: CourseUpdate,
+    db: Session = Depends(get_db)
+):
+    course = db.query(Course).filter(Course.id == course_id).first()
+
+    if course is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    update_data = updated_course.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
+        setattr(course, key, value)
+
+    db.commit()
+    db.refresh(course)
+
+    return course
+
+
+@router.delete("/{course_id}")
+def delete_course(course_id: int, db: Session = Depends(get_db)):
+    course = db.query(Course).filter(Course.id == course_id).first()
+
+    if course is None:
+        raise HTTPException(status_code=404, detail="Course not found")
+
+    db.delete(course)
+    db.commit()
+
+    return {"message": "Course deleted successfully"}
