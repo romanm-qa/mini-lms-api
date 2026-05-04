@@ -1,14 +1,8 @@
 # Mini LMS API
 
-Mini LMS API is a practice project built for improving QA skills in:
+Mini LMS API is a practice project created to improve QA skills in backend testing, API validation, and automation preparation.
 
-* API testing
-* Postman practice
-* SQL validation
-* backend architecture understanding
-* QA automation preparation
-
-The goal of this project is not only to write API endpoints, but to deeply understand how backend systems work and how QA engineers test them in real projects.
+This project is focused not only on writing endpoints, but also on understanding how backend systems work and how QA engineers test them in real projects.
 
 ---
 
@@ -21,9 +15,9 @@ This project helps practice:
 * routes and routers
 * Swagger / OpenAPI documentation
 * Postman API testing
-* SQLAlchemy and database logic
 * CRUD operations
-* API automation with pytest + requests
+* fake database logic before real DB integration
+* API automation preparation with pytest + requests
 * GitHub portfolio structure for QA interviews
 
 ---
@@ -49,42 +43,127 @@ Implemented:
 * project structure setup
 * FastAPI app initialization
 * health check endpoint
-* POST `/courses` endpoint
+* full CRUD for /courses
 * request body validation using Pydantic schemas
 * automatic Swagger documentation
+* fake in-memory database
 * architecture notes for interview preparation
+
+---
+
+# API Endpoints
+
+## Health Check
+
+GET /health
+
+Used to verify that the API server is running correctly.
+
+---
+
+## Courses CRUD
+
+GET /courses
+GET /courses/{course_id}
+POST /courses
+PUT /courses/{course_id}
+DELETE /courses/{course_id}
+
+### POST /courses
+
+Create new course.
+
+* receives request body: title, description, is_active
+* validates data using Pydantic schema
+* generates fake ID automatically
+* saves object into temporary fake database (courses = [])
+* returns created object
+
+---
+
+### GET /courses
+
+Get all courses.
+
+* returns full list of created courses
+
+---
+
+### GET /courses/{course_id}
+
+Get single course by ID.
+
+* searches course inside fake database
+* returns found course
+* returns 404 if course does not exist
+
+---
+
+### PUT /courses/{course_id}
+
+Update course by ID.
+
+* searches existing course
+* updates title, description, is_active
+* returns updated object
+* returns 404 if course does not exist
+
+---
+
+### DELETE /courses/{course_id}
+
+Delete course by ID.
+
+* finds course inside fake database
+* removes it from list
+* returns success message
+* returns 404 if course does not exist
+
+---
+
+# Fake Database Logic
+
+Instead of a real database, the project currently uses:
+
+courses = []
+
+This is a temporary in-memory storage:
+
+* data exists only while server is running
+* after restart everything is deleted
+* useful for learning API logic before connecting real database
+
+This helps fully understand CRUD behavior before moving to SQLAlchemy and PostgreSQL.
 
 ---
 
 # Project Structure
 
-```text
 mini-lms-api/
-│
-├── app/
-│   ├── main.py
-│   ├── database.py
-│   │
-│   ├── routes/
-│   │   └── course.py
-│   │
-│   ├── schemas/
-│   │   └── course.py
-│   │
-│   └── models/
-│
-├── tests/
-│   └── api/
-│
-├── notes/
-│   ├── schemas_and_validation.md
-│   ├── routes_and_routers.md
-│   └── swagger_and_postman.md
-│
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
+
+app/
+main.py
+
+routes/
+└── course.py
+
+schemas/
+└── course.py
+
+models/
+
+tests/
+└── api/
+
+notes/
+├── schemas_and_validation.md
+├── routes_and_routers.md
+├── swagger_and_postman.md
+└── crud_fake_database.md
+
+requirements.txt
+.gitignore
+README.md
 
 ---
 
@@ -100,7 +179,7 @@ It is a QA-focused backend project created to:
 * practice real-world backend validation
 * build a strong GitHub portfolio project
 
-This helps bridge the gap between manual QA and automation QA.
+This helps bridge the gap between Manual QA and Automation QA.
 
 ---
 
@@ -108,15 +187,12 @@ This helps bridge the gap between manual QA and automation QA.
 
 Planned implementation:
 
-* GET all courses
-* GET course by ID
-* UPDATE course
-* DELETE course
-* database integration
 * SQLAlchemy models
+* SQLite / PostgreSQL integration
 * automated API tests
 * negative and validation scenarios
 * authentication testing
+* CI-ready project structure
 
 ---
 
