@@ -1,0 +1,22 @@
+from typing import Optional
+from pydantic import BaseModel, EmailStr
+
+
+class User(BaseModel):
+    id: int
+    first_name: str
+    last_name: str
+    email: EmailStr
+    role: str
+    progress: int = 0
+    certificate: bool = False
+    is_active: bool = True
+    
+
+class UserUpdate(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    role: Optional[str] = None
+    progress: Optional[int] = None
+    is_active: Optional[bool] = None
